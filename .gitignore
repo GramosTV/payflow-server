@@ -1,0 +1,80 @@
+### Java ###
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+### Maven ###
+target/
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+out/
+
+# IntelliJ logs & metadata
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+### VS Code ###
+.vscode/
+
+### Eclipse ###
+.project
+.classpath
+.settings/
+.springBeans
+
+### Operating System ###
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Logs ###
+logs/
+*.log
+*.out
+
+### Spring Boot Devtools ###
+spring-boot-devtools.properties
+spring-boot-devtools.yml
+
+### Environment Files ###
+.env
+*.env
+
+### Node (for frontend inside project) ###
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+
+### Git ###
+*.orig
+
+### Others ###
+*.swp
+*.bak
+*.tmp
+*.pid
+*.seed
+*.gz
+*.zip
+
+### JetBrains Rider ###
+.idea/
+*.sln.iml
+
+# Lombok cache
+lombok.config
