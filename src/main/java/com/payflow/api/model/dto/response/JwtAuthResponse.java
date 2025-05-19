@@ -13,11 +13,5 @@ public class JwtAuthResponse {
     private String fullName;
     private String role;
 
-    public JwtAuthResponse(String accessToken, Long userId, String email, String fullName, String role) {
-        this.accessToken = accessToken;
-        this.userId = userId;
-        this.email = email;
-        this.fullName = fullName;
-        this.role = role;
-    }
+    // Manual constructor removed
 }

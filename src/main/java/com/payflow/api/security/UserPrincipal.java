@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@AllArgsConstructor
 @Getter
 public class UserPrincipal implements UserDetails {
 
@@ -21,8 +20,17 @@ public class UserPrincipal implements UserDetails {
     private String email;
     @JsonIgnore
     private String password;
-    private String fullName;
+    private String fullName; // Added field
     private Collection<? extends GrantedAuthority> authorities;
+
+    public UserPrincipal(Long id, String email, String password, String fullName,
+            Collection<? extends GrantedAuthority> authorities) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.fullName = fullName; // Initialize field
+        this.authorities = authorities;
+    }
 
     public static UserPrincipal create(User user) {
         List<GrantedAuthority> authorities = Collections.singletonList(
@@ -32,7 +40,7 @@ public class UserPrincipal implements UserDetails {
                 user.getId(),
                 user.getEmail(),
                 user.getPassword(),
-                user.getFullName(),
+                user.getFullName(), // Pass fullName
                 authorities);
     }
 

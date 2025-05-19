@@ -157,44 +157,81 @@ public class QRCodeService {
     /**
      * Generate QR code image as base64 string
      */
+    @Transactional(readOnly = true)
     public String generateQRCodeImage(String qrId) {
-        QRCode qrCode = getQRCodeByQrId(qrId);
-        String qrContent = createQRCodeContent(qrCode);
-
         try {
+            // Find the QR code by qrId and eagerly fetch the wallet
+            QRCode qrCode = qrCodeRepository.findByQrIdWithWallet(qrId)
+                    .orElseThrow(() -> new ResourceNotFoundException("QRCode", "qrId", qrId));
+
+            // Force initialization of the wallet entity to avoid
+            // LazyInitializationException
+            if (qrCode.getWallet() != null) {
+                qrCode.getWallet().getWalletNumber(); // Force initialization
+            }
+
+            // Create the content for the QR code
+            String qrContent = createQRCodeContent(qrCode);
+
+            // Generate the QR code
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
             BitMatrix bitMatrix = qrCodeWriter.encode(qrContent, BarcodeFormat.QR_CODE, 300, 300);
 
+            // Convert to an image
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
             byte[] qrCodeBytes = outputStream.toByteArray();
 
+            // Return as base64 string
             return Base64.getEncoder().encodeToString(qrCodeBytes);
-        } catch (WriterException | IOException e) {
-            log.error("Failed to generate QR code image", e);
-            throw new BadRequestException("Failed to generate QR code image");
+        } catch (ResourceNotFoundException e) {
+            log.error("QR code not found: {}", qrId, e);
+            throw e;
+        } catch (WriterException e) {
+            log.error("Error encoding QR code: {}", qrId, e);
+            throw new BadRequestException("Failed to generate QR code image: " + e.getMessage());
+        } catch (IOException e) {
+            log.error("I/O error generating QR code image: {}", qrId, e);
+            throw new BadRequestException("Failed to generate QR code image: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error generating QR code image: {}", qrId, e);
+            throw new BadRequestException("Failed to generate QR code image: " + e.getMessage());
         }
     }
 
     /**
-     * Create QR code content
+     * Create QR code content with proper URL encoding
      */
     private String createQRCodeContent(QRCode qrCode) {
-        StringBuilder content = new StringBuilder();
-        content.append("payflow://payment?");
-        content.append("qr_id=").append(qrCode.getQrId());
-        content.append("&wallet=").append(qrCode.getWallet().getWalletNumber());
-        content.append("&currency=").append(qrCode.getWallet().getCurrency());
+        try {
+            StringBuilder content = new StringBuilder();
+            content.append("payflow://payment?");
+            content.append("qr_id=").append(qrCode.getQrId());
 
-        if (qrCode.isAmountFixed() && qrCode.getAmount() != null) {
-            content.append("&amount=").append(qrCode.getAmount());
+            // Check if wallet is not null before accessing
+            if (qrCode.getWallet() != null) {
+                content.append("&wallet=").append(qrCode.getWallet().getWalletNumber());
+                content.append("&currency=").append(qrCode.getWallet().getCurrency());
+            } else {
+                log.warn("QR code {} has null wallet", qrCode.getQrId());
+                throw new BadRequestException("Invalid QR code: missing wallet information");
+            }
+
+            if (qrCode.isAmountFixed() && qrCode.getAmount() != null) {
+                content.append("&amount=").append(qrCode.getAmount());
+            }
+
+            if (qrCode.getDescription() != null && !qrCode.getDescription().isEmpty()) {
+                // URL encode the description to handle special characters
+                String encodedDescription = java.net.URLEncoder.encode(qrCode.getDescription(), "UTF-8");
+                content.append("&description=").append(encodedDescription);
+            }
+
+            return content.toString();
+        } catch (Exception e) {
+            log.error("Error creating QR code content for QR ID: {}", qrCode.getQrId(), e);
+            throw new BadRequestException("Failed to create QR code content: " + e.getMessage());
         }
-
-        if (qrCode.getDescription() != null) {
-            content.append("&description=").append(qrCode.getDescription());
-        }
-
-        return content.toString();
     }
 
     /**
@@ -211,5 +248,38 @@ public class QRCodeService {
 
         qrCode.setActive(false);
         qrCodeRepository.save(qrCode);
+    }
+
+    /**
+     * Get a QR code by ID with Wallet eagerly loaded
+     * This prevents LazyInitializationException when accessing wallet outside
+     * transaction
+     */
+    @Transactional(readOnly = true)
+    public QRCode getQRCodeByIdWithWallet(Long id) {
+        QRCode qrCode = getQRCodeById(id);
+
+        // Reload the QR code with the wallet eagerly fetched if we have the QR ID
+        if (qrCode != null && qrCode.getQrId() != null) {
+            // Try to use the repository method that eagerly fetches the wallet
+            return qrCodeRepository.findByQrIdWithWallet(qrCode.getQrId())
+                    .orElse(initializeQRCodeWallet(qrCode));
+        }
+
+        return initializeQRCodeWallet(qrCode);
+    }
+
+    /**
+     * Initialize the wallet entity to avoid LazyInitializationException
+     */
+    private QRCode initializeQRCodeWallet(QRCode qrCode) {
+        if (qrCode != null && qrCode.getWallet() != null) {
+            // Force initialization of wallet and user to avoid LazyInitializationException
+            qrCode.getWallet().getWalletNumber();
+            if (qrCode.getWallet().getUser() != null) {
+                qrCode.getWallet().getUser().getId();
+            }
+        }
+        return qrCode;
     }
 }

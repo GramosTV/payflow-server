@@ -18,6 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +61,7 @@ public class WalletServiceTest {
         testWallet.setCurrency(Wallet.Currency.USD);
         testWallet.setBalance(BigDecimal.valueOf(1000));
         testWallet.setWalletNumber("WALLET123456");
-        testWallet.setCreatedAt(Instant.now());
+        testWallet.setCreatedAt(LocalDateTime.now()); // Changed from Instant.now()
 
         // Initialize test transaction
         testTransaction = new Transaction();

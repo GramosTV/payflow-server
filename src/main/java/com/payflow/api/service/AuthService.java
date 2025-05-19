@@ -61,6 +61,7 @@ public class AuthService {
 
             return new JwtAuthResponse(
                     jwt,
+                    "Bearer", // Added tokenType parameter
                     userPrincipal.getId(),
                     userPrincipal.getEmail(),
                     userPrincipal.getFullName(),

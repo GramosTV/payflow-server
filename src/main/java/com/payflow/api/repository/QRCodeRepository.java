@@ -14,6 +14,9 @@ import java.util.Optional;
 public interface QRCodeRepository extends JpaRepository<QRCode, Long> {
     Optional<QRCode> findByQrId(String qrId);
 
+    @Query("SELECT q FROM QRCode q JOIN FETCH q.wallet WHERE q.qrId = ?1")
+    Optional<QRCode> findByQrIdWithWallet(String qrId);
+
     @Query("SELECT q FROM QRCode q WHERE q.wallet.user = ?1 ORDER BY q.createdAt DESC")
     List<QRCode> findByUser(User user);
 

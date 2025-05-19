@@ -1,5 +1,6 @@
 package com.payflow.api.controller;
 
+import com.payflow.api.exception.ResourceNotFoundException;
 import com.payflow.api.model.dto.request.QRCodeRequest;
 import com.payflow.api.model.entity.QRCode;
 import com.payflow.api.model.entity.Transaction;
@@ -91,7 +92,13 @@ public class QRCodeController {
     @Operation(summary = "Get QR code image by ID as base64 string")
     public ResponseEntity<Map<String, String>> getQRCodeImageById(@PathVariable Long id) {
         try {
-            QRCode qrCode = qrCodeService.getQRCodeById(id);
+            // First retrieve the QR code object with wallet eagerly loaded
+            QRCode qrCode = qrCodeService.getQRCodeByIdWithWallet(id);
+            if (qrCode == null) {
+                throw new ResourceNotFoundException("QRCode", "id", id);
+            }
+
+            // Generate the image using the QR code's unique identifier
             String base64Image = qrCodeService.generateQRCodeImage(qrCode.getQrId());
 
             Map<String, String> response = new HashMap<>();
@@ -100,9 +107,15 @@ public class QRCodeController {
             response.put("imageData", "data:image/png;base64," + base64Image);
 
             return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            // Log the not found error
+            System.err.println("QR code not found: " + e.getMessage());
+
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "QR code not found: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
         } catch (Exception e) {
             // Log the error
-            // Consider using a logger like SLF4J if available
             System.err.println("Error generating QR code image: " + e.getMessage());
             e.printStackTrace();
 
@@ -119,7 +132,8 @@ public class QRCodeController {
             @PathVariable Long id) {
 
         User user = userService.getUserById(currentUser.getId());
-        QRCode qrCode = qrCodeService.getQRCodeById(id);
+        // Use getQRCodeByIdWithWallet to prevent LazyInitializationException
+        QRCode qrCode = qrCodeService.getQRCodeByIdWithWallet(id);
 
         // Ensure the QR code belongs to the current user
         if (!qrCode.getWallet().getUser().getId().equals(user.getId())) {
@@ -181,7 +195,8 @@ public class QRCodeController {
             @PathVariable Long id) {
 
         User user = userService.getUserById(currentUser.getId());
-        QRCode qrCode = qrCodeService.getQRCodeById(id);
+        // Use getQRCodeByIdWithWallet to prevent LazyInitializationException
+        QRCode qrCode = qrCodeService.getQRCodeByIdWithWallet(id);
         qrCodeService.deactivateQRCode(user, qrCode.getQrId());
 
         // Return the updated QR code to match client expectations

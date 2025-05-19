@@ -56,10 +56,13 @@ public class AuthControllerTest {
         loginRequest.setPassword("password123");
 
         // Initialize auth response
-        authResponse = new JwtAuthResponse();
-        authResponse.setAccessToken("test-jwt-token");
-        authResponse.setTokenType("Bearer");
-        authResponse.setExpiresIn(86400000);
+        authResponse = new JwtAuthResponse(
+                "test-jwt-token",
+                "Bearer", // Added tokenType argument
+                1L,
+                "test@example.com",
+                "Test User",
+                "ROLE_USER");
     }
 
     @Test
