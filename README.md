@@ -1,5 +1,7 @@
 # PayFlow Lite - Fintech Web App Server
 
+**Client repository:** [https://github.com/GramosTV/payflow-client](https://github.com/GramosTV/payflow-client)
+
 PayFlow Lite is a full-stack fintech web application that simulates a modern digital wallet system. This repository contains the Java Spring Boot server-side implementation.
 
 ## Features
