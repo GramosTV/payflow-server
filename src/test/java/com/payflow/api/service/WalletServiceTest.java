@@ -48,13 +48,11 @@ public class WalletServiceTest {
 
     @BeforeEach
     public void setup() {
-        // Initialize test user
         testUser = new User();
         testUser.setId(1L);
         testUser.setEmail("test@example.com");
         testUser.setFullName("Test User");
 
-        // Initialize test wallet
         testWallet = new Wallet();
         testWallet.setId(1L);
         testWallet.setUser(testUser);
@@ -63,19 +61,16 @@ public class WalletServiceTest {
         testWallet.setWalletNumber("WALLET123456");
         testWallet.setCreatedAt(LocalDateTime.now()); // Changed from Instant.now()
 
-        // Initialize test transaction
         testTransaction = new Transaction();
         testTransaction.setId(1L);
         testTransaction.setTransactionNumber("TXN123456");
         testTransaction.setAmount(BigDecimal.valueOf(500));
         testTransaction.setType(Transaction.TransactionType.DEPOSIT);
 
-        // Initialize wallet request
         walletRequest = new WalletRequest();
         walletRequest.setCurrency(Wallet.Currency.EUR);
         walletRequest.setInitialDeposit(BigDecimal.valueOf(200));
 
-        // Initialize top up request
         topUpRequest = new TopUpRequest();
         topUpRequest.setWalletNumber("WALLET123456");
         topUpRequest.setAmount(BigDecimal.valueOf(500));

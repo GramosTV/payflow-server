@@ -55,9 +55,6 @@ public class Wallet {
         USD, EUR, GBP, PLN, JPY, CAD, AUD, CHF, CNY, INR
     }
 
-    /**
-     * Generate a random wallet number
-     */
     @PrePersist
     public void generateWalletNumber() {
         if (walletNumber == null || walletNumber.isEmpty()) {

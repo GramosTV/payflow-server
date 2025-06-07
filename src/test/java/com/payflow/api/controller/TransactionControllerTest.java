@@ -68,7 +68,6 @@ public class TransactionControllerTest {
 
         @BeforeEach
         public void setup() {
-                // Initialize test user
                 testUser = new User();
                 testUser.setId(1L);
                 testUser.setEmail("test@example.com");
@@ -94,7 +93,6 @@ public class TransactionControllerTest {
                 destWallet.setBalance(BigDecimal.valueOf(500));
                 destWallet.setWalletNumber("WALLET654321");
 
-                // Initialize test transaction
                 testTransaction = new Transaction();
                 testTransaction.setId(1L);
                 testTransaction.setTransactionNumber("TXN123456");
@@ -109,14 +107,12 @@ public class TransactionControllerTest {
                 testTransaction.setDestinationCurrency(Wallet.Currency.USD);
                 testTransaction.setCreatedAt(LocalDateTime.now()); // Changed from Instant.now()
 
-                // Initialize transaction request
                 transactionRequest = new TransactionRequest();
                 transactionRequest.setSourceWalletNumber("WALLET123456");
                 transactionRequest.setDestinationWalletNumber("WALLET654321");
                 transactionRequest.setAmount(BigDecimal.valueOf(100));
                 transactionRequest.setDescription("Test transfer");
 
-                // Initialize user principal
                 userPrincipal = new UserPrincipal(
                                 testUser.getId(),
                                 testUser.getEmail(),

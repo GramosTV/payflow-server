@@ -51,19 +51,16 @@ public class QRCodeServiceTest {
 
     @BeforeEach
     public void setup() {
-        // Initialize test user
         testUser = new User();
         testUser.setId(1L);
         testUser.setEmail("test@example.com");
         testUser.setFullName("Test User");
 
-        // Initialize another user
         otherUser = new User();
         otherUser.setId(2L);
         otherUser.setEmail("other@example.com");
         otherUser.setFullName("Other User");
 
-        // Initialize user wallet
         userWallet = new Wallet();
         userWallet.setId(1L);
         userWallet.setUser(testUser);
@@ -71,7 +68,6 @@ public class QRCodeServiceTest {
         userWallet.setBalance(BigDecimal.valueOf(1000));
         userWallet.setWalletNumber("WALLET123456");
 
-        // Initialize other user wallet
         otherWallet = new Wallet();
         otherWallet.setId(2L);
         otherWallet.setUser(otherUser);
@@ -79,7 +75,6 @@ public class QRCodeServiceTest {
         otherWallet.setBalance(BigDecimal.valueOf(500));
         otherWallet.setWalletNumber("WALLET654321");
 
-        // Initialize QR code
         testQRCode = new QRCode();
         testQRCode.setId(1L);
         testQRCode.setQrId(qrId);
@@ -92,7 +87,6 @@ public class QRCodeServiceTest {
         testQRCode.setCreatedAt(LocalDateTime.now());
         testQRCode.setExpiresAt(LocalDateTime.now().plusDays(7));
 
-        // Initialize transaction
         testTransaction = new Transaction();
         testTransaction.setId(1L);
         testTransaction.setTransactionNumber("TXN123456");

@@ -24,31 +24,18 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final WalletService walletService;
 
-    /**
-     * Register a new user
-     */
     @Transactional
     public JwtAuthResponse register(SignUpRequest signUpRequest) {
-        // Create user
         User user = userService.createUser(signUpRequest);
-
-        // Create default USD wallet
         walletService.createDefaultWallet(user);
 
-        // Authenticate user
         return authenticateUser(signUpRequest.getEmail(), signUpRequest.getPassword());
     }
 
-    /**
-     * Login a user
-     */
     public JwtAuthResponse login(LoginRequest loginRequest) {
         return authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
     }
 
-    /**
-     * Authenticate user and generate JWT token
-     */
     private JwtAuthResponse authenticateUser(String email, String password) {
         try {
             Authentication authentication = authenticationManager.authenticate(

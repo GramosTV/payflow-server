@@ -17,17 +17,11 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    /**
-     * Create a new user account
-     */
     @Transactional
     public User createUser(SignUpRequest signUpRequest) {
-        // Check if email already exists
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             throw new ConflictException("Email is already taken");
         }
-
-        // Create new user
         User user = new User();
         user.setFullName(signUpRequest.getFullName());
         user.setEmail(signUpRequest.getEmail());
@@ -39,25 +33,16 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    /**
-     * Get user by ID
-     */
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
     }
 
-    /**
-     * Get user by email
-     */
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
     }
 
-    /**
-     * Check if email exists
-     */
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }

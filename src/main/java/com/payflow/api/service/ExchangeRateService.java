@@ -28,17 +28,11 @@ public class ExchangeRateService {
     @Value("${exchange.rate.api.url}")
     private String exchangeRateApiUrl;
 
-    /**
-     * Initialize exchange rates at application startup
-     */
     @PostConstruct
     public void initializeExchangeRates() {
         updateAllExchangeRates();
     }
 
-    /**
-     * Scheduled job to update exchange rates
-     */
     @Scheduled(cron = "${exchange.rate.update.schedule}")
     public void updateAllExchangeRates() {
         log.info("Updating exchange rates");
@@ -53,9 +47,6 @@ public class ExchangeRateService {
         }
     }
 
-    /**
-     * Update exchange rates for a specific base currency
-     */
     private void updateExchangeRatesForCurrency(Wallet.Currency baseCurrency) {
         try {
             String url = exchangeRateApiUrl + baseCurrency.name();
@@ -77,9 +68,6 @@ public class ExchangeRateService {
         }
     }
 
-    /**
-     * Save or update exchange rate in the database
-     */
     private void saveOrUpdateExchangeRate(Wallet.Currency baseCurrency, Wallet.Currency targetCurrency,
             BigDecimal rate) {
         exchangeRateRepository.findByBaseCurrencyAndTargetCurrency(baseCurrency, targetCurrency)
@@ -91,9 +79,6 @@ public class ExchangeRateService {
                         () -> exchangeRateRepository.save(new ExchangeRate(baseCurrency, targetCurrency, rate)));
     }
 
-    /**
-     * Get the exchange rate between two currencies
-     */
     public BigDecimal getExchangeRate(Wallet.Currency fromCurrency, Wallet.Currency toCurrency) {
         if (fromCurrency == toCurrency) {
             return BigDecimal.ONE;
@@ -107,9 +92,6 @@ public class ExchangeRateService {
                         fromCurrency + " to " + toCurrency));
     }
 
-    /**
-     * Convert an amount from one currency to another
-     */
     public BigDecimal convertCurrency(BigDecimal amount, Wallet.Currency fromCurrency, Wallet.Currency toCurrency) {
         BigDecimal rate = getExchangeRate(fromCurrency, toCurrency);
         return amount.multiply(rate).setScale(4, RoundingMode.HALF_UP);

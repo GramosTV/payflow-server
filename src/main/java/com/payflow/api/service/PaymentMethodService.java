@@ -17,27 +17,17 @@ public class PaymentMethodService {
 
     private final PaymentMethodRepository paymentMethodRepository;
 
-    /**
-     * Get all payment methods for a user
-     */
     public List<PaymentMethod> getUserPaymentMethods(User user) {
         return paymentMethodRepository.findByUserOrderByCreatedAtDesc(user);
     }
 
-    /**
-     * Get payment method by ID
-     */
     public PaymentMethod getPaymentMethodById(Long id) {
         return paymentMethodRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PaymentMethod", "id", id));
     }
 
-    /**
-     * Create a new payment method
-     */
     @Transactional
     public PaymentMethod createPaymentMethod(User user, PaymentMethod paymentMethod) {
-        // Validate based on type
         if (paymentMethod.getType() == PaymentMethod.PaymentMethodType.CARD) {
             if (paymentMethod.getCardNumber() == null || paymentMethod.getExpiryDate() == null
                     || paymentMethod.getCvv() == null) {
@@ -55,9 +45,6 @@ public class PaymentMethodService {
         return paymentMethodRepository.save(paymentMethod);
     }
 
-    /**
-     * Delete a payment method
-     */
     @Transactional
     public void deletePaymentMethod(User user, Long paymentMethodId) {
         PaymentMethod paymentMethod = getPaymentMethodById(paymentMethodId);

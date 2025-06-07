@@ -87,7 +87,6 @@ public class WalletController {
 
         Wallet wallet = walletService.getWalletById(walletId);
 
-        // Check if the wallet belongs to the current user
         if (!wallet.getUser().getId().equals(currentUser.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -142,7 +141,6 @@ public class WalletController {
 
         Wallet wallet = walletService.getWalletById(walletId);
 
-        // Check if the wallet belongs to the current user
         if (!wallet.getUser().getId().equals(currentUser.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

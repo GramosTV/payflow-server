@@ -12,7 +12,6 @@ import com.payflow.api.model.entity.Transaction;
 import com.payflow.api.model.entity.User;
 import com.payflow.api.model.entity.Wallet;
 import com.payflow.api.repository.QRCodeRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +24,6 @@ import java.util.Base64;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class QRCodeService {
 
@@ -33,14 +31,19 @@ public class QRCodeService {
     private final WalletService walletService;
     private final TransactionService transactionService;
 
-    /**
-     * Create a QR code for a wallet
-     */
+    public QRCodeService(
+            QRCodeRepository qrCodeRepository,
+            WalletService walletService,
+            TransactionService transactionService) {
+        this.qrCodeRepository = qrCodeRepository;
+        this.walletService = walletService;
+        this.transactionService = transactionService;
+    }
+
     @Transactional
     public QRCode createWalletQRCode(User user, String walletNumber, BigDecimal amount,
             boolean isAmountFixed, boolean isOneTime,
             String description, LocalDateTime expiresAt) {
-        // Get the wallet
         Wallet wallet = walletService.getWalletByNumber(walletNumber);
 
         // Ensure the wallet belongs to the user
@@ -54,32 +57,20 @@ public class QRCodeService {
         return qrCodeRepository.save(qrCode);
     }
 
-    /**
-     * Get a QR code by ID
-     */
     public QRCode getQRCodeById(Long id) {
         return qrCodeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("QRCode", "id", id));
     }
 
-    /**
-     * Get a QR code by QR ID
-     */
     public QRCode getQRCodeByQrId(String qrId) {
         return qrCodeRepository.findByQrId(qrId)
                 .orElseThrow(() -> new ResourceNotFoundException("QRCode", "qrId", qrId));
     }
 
-    /**
-     * Get all QR codes for a user
-     */
     public List<QRCode> getUserQRCodes(User user) {
         return qrCodeRepository.findByUser(user);
     }
 
-    /**
-     * Get all QR codes for a wallet
-     */
     public List<QRCode> getWalletQRCodes(Wallet wallet) {
         return qrCodeRepository.findByWallet(wallet);
     }
@@ -89,7 +80,6 @@ public class QRCodeService {
      */
     @Transactional
     public Transaction processQRCodePayment(User sender, String qrId, BigDecimal amount, String sourceWalletNumber) {
-        // Get the QR code
         QRCode qrCode = getQRCodeByQrId(qrId);
 
         // Ensure the QR code is active
@@ -101,8 +91,6 @@ public class QRCodeService {
         if (qrCode.getExpiresAt() != null && qrCode.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("This QR code has expired");
         }
-
-        // Get the source wallet
         Wallet sourceWallet = walletService.getWalletByNumber(sourceWalletNumber);
 
         // Ensure the source wallet belongs to the sender
@@ -125,8 +113,6 @@ public class QRCodeService {
         if (sourceWallet.getBalance().compareTo(paymentAmount) < 0) {
             throw new BadRequestException("Insufficient balance in source wallet");
         }
-
-        // Get destination wallet
         Wallet destinationWallet = qrCode.getWallet();
 
         // Create transaction
@@ -156,22 +142,40 @@ public class QRCodeService {
 
     /**
      * Generate QR code image as base64 string
+     * 
+     * This method is annotated with @Transactional to avoid
+     * LazyInitializationException
+     * when accessing wallet outside of a transaction. The readOnly=true flag
+     * optimizes
+     * database access for better performance.
+     * 
+     * In a production environment, consider adding caching to this method:
+     * 1. Add a @Cacheable annotation with a TTL policy
+     * 2. Implement a distributed cache like Redis for clustered environments
+     * 3. Use a file-based cache for QR images to reduce CPU usage
      */
     @Transactional(readOnly = true)
     public String generateQRCodeImage(String qrId) {
+        log.info("Generating QR code image for qrId: {}", qrId);
         try {
-            // Find the QR code by qrId and eagerly fetch the wallet
             QRCode qrCode = qrCodeRepository.findByQrIdWithWallet(qrId)
-                    .orElseThrow(() -> new ResourceNotFoundException("QRCode", "qrId", qrId));
+                    .orElseThrow(() -> {
+                        log.warn("QR code not found with qrId: {}", qrId);
+                        return new ResourceNotFoundException("QRCode", "qrId", qrId);
+                    });
 
             // Force initialization of the wallet entity to avoid
             // LazyInitializationException
             if (qrCode.getWallet() != null) {
                 qrCode.getWallet().getWalletNumber(); // Force initialization
+                log.debug("Successfully initialized wallet for QR code: {}", qrId);
+            } else {
+                log.warn("Wallet is null for QR code: {}", qrId);
             }
 
             // Create the content for the QR code
             String qrContent = createQRCodeContent(qrCode);
+            log.debug("Generated QR content for qrId: {}", qrId);
 
             // Generate the QR code
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
@@ -234,9 +238,6 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Deactivate a QR code
-     */
     @Transactional
     public void deactivateQRCode(User user, String qrId) {
         QRCode qrCode = getQRCodeByQrId(qrId);

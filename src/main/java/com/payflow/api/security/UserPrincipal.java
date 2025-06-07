@@ -28,7 +28,7 @@ public class UserPrincipal implements UserDetails {
         this.id = id;
         this.email = email;
         this.password = password;
-        this.fullName = fullName; // Initialize field
+        this.fullName = fullName;
         this.authorities = authorities;
     }
 

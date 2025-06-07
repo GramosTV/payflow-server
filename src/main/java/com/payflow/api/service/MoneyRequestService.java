@@ -28,20 +28,14 @@ public class MoneyRequestService {
     private final WalletService walletService;
     private final TransactionService transactionService;
 
-    /**
-     * Create a money request
-     */
     @Transactional
     public MoneyRequest createMoneyRequest(User requester, MoneyRequestDTO requestDTO) {
-        // Get the requestee user
         User requestee = userService.getUserByEmail(requestDTO.getRequesteeEmail());
 
         // Ensure requester is not requesting money from themselves
         if (requester.getId().equals(requestee.getId())) {
             throw new BadRequestException("You cannot request money from yourself");
         }
-
-        // Get the wallet to receive the money
         Wallet wallet = walletService.getWalletByNumber(requestDTO.getWalletNumber());
 
         // Ensure the wallet belongs to the requester
@@ -62,42 +56,26 @@ public class MoneyRequestService {
         return moneyRequestRepository.save(moneyRequest);
     }
 
-    /**
-     * Get money request by ID
-     */
     public MoneyRequest getMoneyRequestById(Long id) {
         return moneyRequestRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MoneyRequest", "id", id));
     }
 
-    /**
-     * Get money request by request number
-     */
     public MoneyRequest getMoneyRequestByNumber(String requestNumber) {
         return moneyRequestRepository.findByRequestNumber(requestNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("MoneyRequest", "requestNumber", requestNumber));
     }
 
-    /**
-     * Get money requests sent by a user
-     */
     public Page<MoneyRequest> getSentMoneyRequests(User user, Pageable pageable) {
         return moneyRequestRepository.findByRequesterOrderByCreatedAtDesc(user, pageable);
     }
 
-    /**
-     * Get money requests received by a user
-     */
     public Page<MoneyRequest> getReceivedMoneyRequests(User user, Pageable pageable) {
         return moneyRequestRepository.findByRequesteeOrderByCreatedAtDesc(user, pageable);
     }
 
-    /**
-     * Process a money request action (approve/decline)
-     */
     @Transactional
     public Transaction processMoneyRequestAction(User user, MoneyRequestActionDTO actionDTO) {
-        // Get the money request
         MoneyRequest moneyRequest = getMoneyRequestByNumber(actionDTO.getRequestNumber());
 
         // Ensure the user is the requestee
@@ -124,11 +102,7 @@ public class MoneyRequestService {
         }
     }
 
-    /**
-     * Approve a money request
-     */
     private Transaction approveMoneyRequest(MoneyRequest moneyRequest, User user, String paymentWalletNumber) {
-        // Get the payment wallet
         Wallet sourceWallet = walletService.getWalletByNumber(paymentWalletNumber);
 
         // Ensure the wallet belongs to the user
@@ -146,20 +120,13 @@ public class MoneyRequestService {
         return transaction;
     }
 
-    /**
-     * Decline a money request
-     */
     private void declineMoneyRequest(MoneyRequest moneyRequest) {
         moneyRequest.setStatus(MoneyRequest.RequestStatus.DECLINED);
         moneyRequestRepository.save(moneyRequest);
     }
 
-    /**
-     * Cancel a money request
-     */
     @Transactional
     public void cancelMoneyRequest(User user, String requestNumber) {
-        // Get the money request
         MoneyRequest moneyRequest = getMoneyRequestByNumber(requestNumber);
 
         // Ensure the user is the requester
@@ -178,9 +145,6 @@ public class MoneyRequestService {
         moneyRequestRepository.save(moneyRequest);
     }
 
-    /**
-     * Scheduled task to expire pending money requests
-     */
     @Scheduled(cron = "0 0 0 * * ?") // Run every day at midnight
     public void expireMoneyRequests() {
         LocalDateTime now = LocalDateTime.now();
@@ -192,9 +156,6 @@ public class MoneyRequestService {
         }
     }
 
-    /**
-     * Get pending money requests for a user
-     */
     public List<MoneyRequest> getPendingRequestsForUser(User user) {
         return moneyRequestRepository.findPendingRequestsForUser(user);
     }

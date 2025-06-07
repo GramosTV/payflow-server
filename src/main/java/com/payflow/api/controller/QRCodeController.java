@@ -1,5 +1,6 @@
 package com.payflow.api.controller;
 
+import com.payflow.api.exception.PayflowApiException;
 import com.payflow.api.exception.ResourceNotFoundException;
 import com.payflow.api.model.dto.request.QRCodeRequest;
 import com.payflow.api.model.entity.QRCode;
@@ -11,6 +12,7 @@ import com.payflow.api.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,8 +26,9 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("qr-codes")
-@RequiredArgsConstructor
 @Tag(name = "QR Codes", description = "QR Code management API")
+@RequiredArgsConstructor
+@Slf4j
 public class QRCodeController {
 
     private final QRCodeService qrCodeService;
@@ -89,7 +92,12 @@ public class QRCodeController {
     }
 
     @GetMapping("/{id}/image")
-    @Operation(summary = "Get QR code image by ID as base64 string")
+    @Operation(summary = "Get QR code image by ID as base64 string", description = "Returns a base64 encoded PNG image of the QR code for the given ID")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "QR code image generated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "QR code not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error generating QR code image")
+    })
     public ResponseEntity<Map<String, String>> getQRCodeImageById(@PathVariable Long id) {
         try {
             // First retrieve the QR code object with wallet eagerly loaded
@@ -109,7 +117,7 @@ public class QRCodeController {
             return ResponseEntity.ok(response);
         } catch (ResourceNotFoundException e) {
             // Log the not found error
-            System.err.println("QR code not found: " + e.getMessage());
+            log.warn("QR code not found: {}", e.getMessage());
 
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "QR code not found: " + e.getMessage());
@@ -126,18 +134,23 @@ public class QRCodeController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get QR code by ID")
+    @Operation(summary = "Get QR code by ID", description = "Retrieves a QR code by its ID with detailed information")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "QR code found and returned successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Current user does not own the QR code"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "QR code not found")
+    })
     public ResponseEntity<?> getQRCodeById(
             @AuthenticationPrincipal UserPrincipal currentUser,
             @PathVariable Long id) {
-
         User user = userService.getUserById(currentUser.getId());
+
         // Use getQRCodeByIdWithWallet to prevent LazyInitializationException
         QRCode qrCode = qrCodeService.getQRCodeByIdWithWallet(id);
 
         // Ensure the QR code belongs to the current user
         if (!qrCode.getWallet().getUser().getId().equals(user.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You don't have access to this QR code");
+            throw new PayflowApiException("You don't have access to this QR code", HttpStatus.FORBIDDEN);
         }
 
         Map<String, Object> response = new HashMap<>();

@@ -43,19 +43,16 @@ public class AuthControllerTest {
 
     @BeforeEach
     public void setup() {
-        // Initialize signup request
         signUpRequest = new SignUpRequest();
         signUpRequest.setFullName("Test User");
         signUpRequest.setEmail("test@example.com");
         signUpRequest.setPassword("password123");
         signUpRequest.setPhoneNumber("+1234567890");
 
-        // Initialize login request
         loginRequest = new LoginRequest();
         loginRequest.setEmail("test@example.com");
         loginRequest.setPassword("password123");
 
-        // Initialize auth response
         authResponse = new JwtAuthResponse(
                 "test-jwt-token",
                 "Bearer", // Added tokenType argument

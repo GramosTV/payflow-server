@@ -39,7 +39,6 @@ public class UserServiceTest {
 
     @BeforeEach
     public void setup() {
-        // Initialize test user
         testUser = new User();
         testUser.setId(1L);
         testUser.setEmail("test@example.com");
@@ -49,7 +48,6 @@ public class UserServiceTest {
         testUser.setEnabled(true);
         testUser.setRole(User.UserRole.USER);
 
-        // Initialize signup request
         signUpRequest = new SignUpRequest();
         signUpRequest.setEmail("test@example.com");
         signUpRequest.setFullName("Test User");
