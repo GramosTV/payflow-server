@@ -10,6 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Service class for user management operations. Handles user creation, retrieval, and validation.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -18,11 +21,11 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
 
   @Transactional
-  public User createUser(SignUpRequest signUpRequest) {
+  public User createUser(final SignUpRequest signUpRequest) {
     if (userRepository.existsByEmail(signUpRequest.getEmail())) {
       throw new ConflictException("Email is already taken");
     }
-    User user = new User();
+    final User user = new User();
     user.setFullName(signUpRequest.getFullName());
     user.setEmail(signUpRequest.getEmail());
     user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
@@ -33,19 +36,19 @@ public class UserService {
     return userRepository.save(user);
   }
 
-  public User getUserById(Long id) {
+  public User getUserById(final Long id) {
     return userRepository
         .findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
   }
 
-  public User getUserByEmail(String email) {
+  public User getUserByEmail(final String email) {
     return userRepository
         .findByEmail(email)
         .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
   }
 
-  public boolean existsByEmail(String email) {
+  public boolean existsByEmail(final String email) {
     return userRepository.existsByEmail(email);
   }
 }

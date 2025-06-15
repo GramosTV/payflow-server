@@ -14,8 +14,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Repository interface for Transaction entity operations. Provides custom queries for transaction
+ * management and retrieval.
+ */
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+
+  String ORDER_BY_CREATED_AT_DESC = "ORDER BY t.createdAt DESC";
+
   Optional<Transaction> findByTransactionNumber(String transactionNumber);
 
   @Query(
@@ -26,7 +33,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
               + "JOIN FETCH t.sourceWallet sw "
               + "JOIN FETCH t.destinationWallet dw "
               + "WHERE t.sender = :user OR t.receiver = :user "
-              + "ORDER BY t.createdAt DESC",
+              + ORDER_BY_CREATED_AT_DESC,
       countQuery =
           "SELECT count(t) FROM Transaction t WHERE t.sender = :user OR t.receiver = :user")
   Page<Transaction> findBySenderOrReceiverOrderByCreatedAtDesc(
@@ -40,7 +47,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
               + "JOIN FETCH t.sourceWallet sw "
               + "JOIN FETCH t.destinationWallet dw "
               + "WHERE t.sourceWallet = :wallet OR t.destinationWallet = :wallet "
-              + "ORDER BY t.createdAt DESC",
+              + ORDER_BY_CREATED_AT_DESC,
       countQuery =
           "SELECT count(t) FROM Transaction t WHERE t.sourceWallet = :wallet OR t.destinationWallet = :wallet")
   Page<Transaction> findByWalletOrderByCreatedAtDesc(
@@ -54,7 +61,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
           + "JOIN FETCH t.destinationWallet dw "
           + "WHERE (t.sender = :user OR t.receiver = :user) "
           + "AND t.createdAt BETWEEN :startDate AND :endDate "
-          + "ORDER BY t.createdAt DESC")
+          + ORDER_BY_CREATED_AT_DESC)
   List<Transaction> findByUserAndDateRange(
       @Param("user") User user,
       @Param("startDate") LocalDateTime startDate,
@@ -73,6 +80,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
           + "JOIN t.sender s "
           + "JOIN t.receiver r "
           + "WHERE t.sender.id = :userId OR t.receiver.id = :userId "
-          + "ORDER BY t.createdAt DESC")
+          + ORDER_BY_CREATED_AT_DESC)
   Page<TransactionSummary> findSummariesByUserId(@Param("userId") Long userId, Pageable pageable);
 }

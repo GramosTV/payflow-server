@@ -26,131 +26,132 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for wallet management operations.
+ * Provides endpoints for creating wallets, managing funds, and retrieving
+ * wallet information.
+ */
 @RestController
 @RequestMapping("wallets")
 @RequiredArgsConstructor
 @Tag(name = "Wallets", description = "Wallet management API")
 public class WalletController {
 
-  private final WalletService walletService;
-  private final UserService userService;
-  private final TransactionService transactionService;
+    private final WalletService walletService;
+    private final UserService userService;
+    private final TransactionService transactionService;
 
-  @PostMapping
-  @Operation(summary = "Create a new wallet")
-  public ResponseEntity<WalletResponse> createWallet(
-      @AuthenticationPrincipal UserPrincipal currentUser,
-      @Valid @RequestBody WalletRequest walletRequest) {
+    @PostMapping
+    @Operation(summary = "Create a new wallet")
+    public ResponseEntity<WalletResponse> createWallet(
+            @AuthenticationPrincipal final UserPrincipal currentUser,
+            @Valid @RequestBody final WalletRequest walletRequest) {
+        final User user = userService.getUserById(currentUser.getId());
+        final Wallet wallet = walletService.createWallet(user, walletRequest);
 
-    User user = userService.getUserById(currentUser.getId());
-    Wallet wallet = walletService.createWallet(user, walletRequest);
-
-    return new ResponseEntity<>(WalletResponse.fromEntity(wallet), HttpStatus.CREATED);
-  }
-
-  @GetMapping
-  @Operation(summary = "Get all wallets for the current user")
-  public ResponseEntity<List<WalletResponse>> getMyWallets(
-      @AuthenticationPrincipal UserPrincipal currentUser) {
-    User user = userService.getUserById(currentUser.getId());
-    List<Wallet> wallets = walletService.getUserWallets(user);
-
-    List<WalletResponse> walletResponses =
-        wallets.stream().map(WalletResponse::fromEntity).collect(Collectors.toList());
-
-    return ResponseEntity.ok(walletResponses);
-  }
-
-  @GetMapping("/primary")
-  @Operation(summary = "Get the user's primary wallet")
-  public ResponseEntity<WalletResponse> getPrimaryWallet(
-      @AuthenticationPrincipal UserPrincipal currentUser) {
-    User user = userService.getUserById(currentUser.getId());
-    List<Wallet> wallets = walletService.getUserWallets(user);
-
-    // Default to first wallet if available
-    if (wallets.isEmpty()) {
-      return ResponseEntity.notFound().build();
+        return new ResponseEntity<>(WalletResponse.fromEntity(wallet), HttpStatus.CREATED);
     }
 
-    // For now, we'll consider the first wallet (usually USD) as primary
-    Wallet primaryWallet = wallets.get(0);
+    @GetMapping
+    @Operation(summary = "Get all wallets for the current user")
+    public ResponseEntity<List<WalletResponse>> getMyWallets(
+            @AuthenticationPrincipal final UserPrincipal currentUser) {
+        final User user = userService.getUserById(currentUser.getId());
+        final List<Wallet> wallets = walletService.getUserWallets(user);
 
-    return ResponseEntity.ok(WalletResponse.fromEntity(primaryWallet));
-  }
+        final List<WalletResponse> walletResponses = wallets.stream().map(WalletResponse::fromEntity)
+                .collect(Collectors.toList());
 
-  @GetMapping("/{walletId}")
-  @Operation(summary = "Get a wallet by ID")
-  public ResponseEntity<WalletResponse> getWalletById(
-      @AuthenticationPrincipal UserPrincipal currentUser, @PathVariable Long walletId) {
-
-    Wallet wallet = walletService.getWalletById(walletId);
-
-    if (!wallet.getUser().getId().equals(currentUser.getId())) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        return ResponseEntity.ok(walletResponses);
     }
 
-    return ResponseEntity.ok(WalletResponse.fromEntity(wallet));
-  }
+    @GetMapping("/primary")
+    @Operation(summary = "Get the user's primary wallet")
+    public ResponseEntity<WalletResponse> getPrimaryWallet(
+            @AuthenticationPrincipal final UserPrincipal currentUser) {
+        final User user = userService.getUserById(currentUser.getId());
+        final List<Wallet> wallets = walletService.getUserWallets(user);
 
-  @PostMapping("/topup")
-  @Operation(summary = "Top up (add funds to) a wallet")
-  public ResponseEntity<TransactionResponse> topUpWallet(
-      @AuthenticationPrincipal UserPrincipal currentUser,
-      @Valid @RequestBody TopUpRequest topUpRequest) {
+        // Default to first wallet if available
+        if (wallets.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
 
-    User user = userService.getUserById(currentUser.getId());
-    Transaction transaction = walletService.topUpWallet(user, topUpRequest);
+        // For now, we'll consider the first wallet (usually USD) as primary
+        final Wallet primaryWallet = wallets.get(0);
 
-    return new ResponseEntity<>(TransactionResponse.fromEntity(transaction), HttpStatus.CREATED);
-  }
-
-  @PostMapping("/deposit")
-  @Operation(summary = "Deposit funds into a wallet from a payment method")
-  public ResponseEntity<WalletResponse> depositFunds(
-      @AuthenticationPrincipal UserPrincipal currentUser,
-      @Valid @RequestBody DepositRequest depositRequest) {
-
-    User user = userService.getUserById(currentUser.getId());
-    Wallet wallet =
-        walletService.depositFunds(
-            user, depositRequest.getAmount(), depositRequest.getPaymentMethodId());
-
-    return new ResponseEntity<>(WalletResponse.fromEntity(wallet), HttpStatus.OK);
-  }
-
-  @PostMapping("/withdraw")
-  @Operation(summary = "Withdraw funds from a wallet to a payment method")
-  public ResponseEntity<WalletResponse> withdrawFunds(
-      @AuthenticationPrincipal UserPrincipal currentUser,
-      @Valid @RequestBody WithdrawRequest withdrawRequest) {
-
-    User user = userService.getUserById(currentUser.getId());
-    Wallet wallet =
-        walletService.withdrawFunds(
-            user, withdrawRequest.getAmount(), withdrawRequest.getPaymentMethodId());
-
-    return new ResponseEntity<>(WalletResponse.fromEntity(wallet), HttpStatus.OK);
-  }
-
-  @GetMapping("/{walletId}/transactions")
-  @Operation(summary = "Get transactions for a wallet")
-  public ResponseEntity<Page<TransactionResponse>> getWalletTransactions(
-      @AuthenticationPrincipal UserPrincipal currentUser,
-      @PathVariable Long walletId,
-      Pageable pageable) {
-
-    Wallet wallet = walletService.getWalletById(walletId);
-
-    if (!wallet.getUser().getId().equals(currentUser.getId())) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        return ResponseEntity.ok(WalletResponse.fromEntity(primaryWallet));
     }
 
-    Page<Transaction> transactions = transactionService.getWalletTransactions(wallet, pageable);
+    @GetMapping("/{walletId}")
+    @Operation(summary = "Get a wallet by ID")
+    public ResponseEntity<WalletResponse> getWalletById(
+            @AuthenticationPrincipal final UserPrincipal currentUser, @PathVariable final Long walletId) {
 
-    Page<TransactionResponse> transactionResponses =
-        transactions.map(TransactionResponse::fromEntity);
+        final Wallet wallet = walletService.getWalletById(walletId);
 
-    return ResponseEntity.ok(transactionResponses);
-  }
+        if (!wallet.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok(WalletResponse.fromEntity(wallet));
+    }
+
+    @PostMapping("/topup")
+    @Operation(summary = "Top up (add funds to) a wallet")
+    public ResponseEntity<TransactionResponse> topUpWallet(
+            @AuthenticationPrincipal final UserPrincipal currentUser,
+            @Valid @RequestBody final TopUpRequest topUpRequest) {
+
+        final User user = userService.getUserById(currentUser.getId());
+        final Transaction transaction = walletService.topUpWallet(user, topUpRequest);
+
+        return new ResponseEntity<>(TransactionResponse.fromEntity(transaction), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/deposit")
+    @Operation(summary = "Deposit funds into a wallet from a payment method")
+    public ResponseEntity<WalletResponse> depositFunds(
+            @AuthenticationPrincipal final UserPrincipal currentUser,
+            @Valid @RequestBody final DepositRequest depositRequest) {
+
+        final User user = userService.getUserById(currentUser.getId());
+        final Wallet wallet = walletService.depositFunds(
+                user, depositRequest.getAmount(), depositRequest.getPaymentMethodId());
+
+        return new ResponseEntity<>(WalletResponse.fromEntity(wallet), HttpStatus.OK);
+    }
+
+    @PostMapping("/withdraw")
+    @Operation(summary = "Withdraw funds from a wallet to a payment method")
+    public ResponseEntity<WalletResponse> withdrawFunds(
+            @AuthenticationPrincipal final UserPrincipal currentUser,
+            @Valid @RequestBody final WithdrawRequest withdrawRequest) {
+
+        final User user = userService.getUserById(currentUser.getId());
+        final Wallet wallet = walletService.withdrawFunds(
+                user, withdrawRequest.getAmount(), withdrawRequest.getPaymentMethodId());
+
+        return new ResponseEntity<>(WalletResponse.fromEntity(wallet), HttpStatus.OK);
+    }
+
+    @GetMapping("/{walletId}/transactions")
+    @Operation(summary = "Get transactions for a wallet")
+    public ResponseEntity<Page<TransactionResponse>> getWalletTransactions(
+            @AuthenticationPrincipal final UserPrincipal currentUser,
+            @PathVariable final Long walletId,
+            final Pageable pageable) {
+
+        final Wallet wallet = walletService.getWalletById(walletId);
+
+        if (!wallet.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        final Page<Transaction> transactions = transactionService.getWalletTransactions(wallet, pageable);
+
+        final Page<TransactionResponse> transactionResponses = transactions.map(TransactionResponse::fromEntity);
+
+        return ResponseEntity.ok(transactionResponses);
+    }
 }
