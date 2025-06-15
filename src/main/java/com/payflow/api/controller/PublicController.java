@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/** Controller for public endpoints that don't require authentication. */
 @RestController
 @RequestMapping("public")
 @Tag(
@@ -17,21 +18,30 @@ import org.springframework.web.bind.annotation.RestController;
     description = "Public API endpoints that don't require authentication")
 public class PublicController {
 
+  /**
+   * Health check endpoint.
+   *
+   * @return health status information
+   */
   @GetMapping("/health")
   @Operation(summary = "Health check endpoint")
   public ResponseEntity<Map<String, Object>> healthCheck() {
-    Map<String, Object> response = new HashMap<>();
+    final Map<String, Object> response = new HashMap<>();
     response.put("status", "UP");
     response.put("timestamp", LocalDateTime.now());
     response.put("service", "PayFlow Lite API");
-
     return ResponseEntity.ok(response);
   }
 
+  /**
+   * Get available currencies.
+   *
+   * @return list of available currencies
+   */
   @GetMapping("/currencies")
   @Operation(summary = "Get available currencies")
   public ResponseEntity<Map<String, Object>> getAvailableCurrencies() {
-    Map<String, Object> response = new HashMap<>();
+    final Map<String, Object> response = new HashMap<>();
     response.put(
         "currencies",
         java.util.Arrays.asList(com.payflow.api.model.entity.Wallet.Currency.values()));

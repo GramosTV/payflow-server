@@ -49,13 +49,13 @@ public class TransactionService {
    */
   @Transactional
   public Transaction createTransaction(
-      Wallet sourceWallet,
-      Wallet destinationWallet,
-      BigDecimal amount,
-      Wallet.Currency sourceCurrency,
-      Wallet.Currency destinationCurrency,
-      Transaction.TransactionType type,
-      String description) {
+      final Wallet sourceWallet,
+      final Wallet destinationWallet,
+      final BigDecimal amount,
+      final Wallet.Currency sourceCurrency,
+      final Wallet.Currency destinationCurrency,
+      final Transaction.TransactionType type,
+      final String description) {
 
     log.info("Creating transaction of type {} for amount {}", type, amount);
 
@@ -101,14 +101,14 @@ public class TransactionService {
   }
 
   /**
-   * Create a deposit transaction (add funds to wallet)
+   * Creates a deposit transaction (adds funds to wallet).
    *
    * @param wallet Wallet to deposit funds to
    * @param amount Amount to deposit
    * @return Created transaction entity
    */
   @Transactional
-  public Transaction createDepositTransaction(Wallet wallet, BigDecimal amount) {
+  public Transaction createDepositTransaction(final Wallet wallet, final BigDecimal amount) {
     log.info(
         "Creating deposit transaction for wallet {} with amount {}",
         wallet.getWalletNumber(),
@@ -142,7 +142,7 @@ public class TransactionService {
   }
 
   /**
-   * Transfer money between wallets
+   * Transfers money between wallets.
    *
    * @param sender User making the transfer
    * @param request Transfer request details
@@ -152,7 +152,8 @@ public class TransactionService {
    * @throws InsufficientFundsException If source wallet has insufficient balance
    */
   @Transactional(isolation = Isolation.REPEATABLE_READ)
-  public Transaction createTransferTransaction(User sender, TransactionRequest request) {
+  public Transaction createTransferTransaction(
+      final User sender, final TransactionRequest request) {
     log.info(
         "Creating transfer transaction from {} to {} with amount {}",
         request.getSourceWalletNumber(),
@@ -245,7 +246,7 @@ public class TransactionService {
   }
 
   /**
-   * Create a transaction for money request payment
+   * Creates a transaction for money request payment.
    *
    * @param moneyRequest Money request to pay
    * @param sourceWallet Wallet to pay from
@@ -253,7 +254,8 @@ public class TransactionService {
    * @throws InsufficientFundsException If source wallet has insufficient balance
    */
   @Transactional(isolation = Isolation.REPEATABLE_READ)
-  public Transaction createMoneyRequestTransaction(MoneyRequest moneyRequest, Wallet sourceWallet) {
+  public Transaction createMoneyRequestTransaction(
+      final MoneyRequest moneyRequest, final Wallet sourceWallet) {
     log.info(
         "Processing money request payment from wallet {} for request ID {}",
         sourceWallet.getWalletNumber(),
@@ -325,13 +327,13 @@ public class TransactionService {
   }
 
   /**
-   * Process a QR code transaction
+   * Processes a QR code transaction.
    *
    * @param transaction Prepared transaction entity
    * @return Processed transaction entity
    */
   @Transactional(isolation = Isolation.REPEATABLE_READ)
-  public Transaction processQRCodeTransaction(Transaction transaction) {
+  public Transaction processQRCodeTransaction(final Transaction transaction) {
     log.info(
         "Processing QR code transaction between wallets {} and {}",
         transaction.getSourceWallet().getWalletNumber(),
@@ -386,8 +388,15 @@ public class TransactionService {
     }
   }
 
+  /**
+   * Retrieves a transaction by its ID.
+   *
+   * @param id the transaction ID
+   * @return the transaction
+   * @throws ResourceNotFoundException if transaction not found
+   */
   @Transactional(readOnly = true)
-  public Transaction getTransactionById(Long id) {
+  public Transaction getTransactionById(final Long id) {
     log.debug("Retrieving transaction with ID: {}", id);
     return transactionRepository
         .findById(id)
@@ -398,8 +407,15 @@ public class TransactionService {
             });
   }
 
+  /**
+   * Retrieves a transaction by its transaction number.
+   *
+   * @param transactionNumber the transaction number
+   * @return the transaction
+   * @throws ResourceNotFoundException if transaction not found
+   */
   @Transactional(readOnly = true)
-  public Transaction getTransactionByNumber(String transactionNumber) {
+  public Transaction getTransactionByNumber(final String transactionNumber) {
     log.debug("Retrieving transaction with number: {}", transactionNumber);
     return transactionRepository
         .findByTransactionNumber(transactionNumber)
@@ -411,27 +427,42 @@ public class TransactionService {
             });
   }
 
+  /**
+   * Retrieves all transactions for a user with pagination.
+   *
+   * @param user the user whose transactions to retrieve
+   * @param pageable pagination parameters
+   * @return paginated list of transactions
+   */
   @Transactional(readOnly = true)
-  public Page<Transaction> getUserTransactions(User user, Pageable pageable) {
+  public Page<Transaction> getUserTransactions(final User user, final Pageable pageable) {
     log.debug("Retrieving transactions for user ID: {}", user.getId());
     return transactionRepository.findBySenderOrReceiverOrderByCreatedAtDesc(user, pageable);
   }
 
+  /**
+   * Retrieves transaction summaries for a user with pagination.
+   *
+   * @param user the user whose transaction summaries to retrieve
+   * @param pageable pagination parameters
+   * @return paginated list of transaction summaries
+   */
   @Transactional(readOnly = true)
-  public Page<TransactionSummary> getUserTransactionSummaries(User user, Pageable pageable) {
+  public Page<TransactionSummary> getUserTransactionSummaries(
+      final User user, final Pageable pageable) {
     log.debug("Retrieving transaction summaries for user ID: {}", user.getId());
     return transactionRepository.findSummariesByUserId(user.getId(), pageable);
   }
 
   @Transactional(readOnly = true)
-  public Page<Transaction> getWalletTransactions(Wallet wallet, Pageable pageable) {
+  public Page<Transaction> getWalletTransactions(final Wallet wallet, final Pageable pageable) {
     log.debug("Retrieving transactions for wallet ID: {}", wallet.getId());
     return transactionRepository.findByWalletOrderByCreatedAtDesc(wallet, pageable);
   }
 
   @Transactional(readOnly = true)
   public List<Transaction> getUserTransactionsInDateRange(
-      User user, LocalDateTime startDate, LocalDateTime endDate) {
+      final User user, final LocalDateTime startDate, final LocalDateTime endDate) {
     log.debug(
         "Retrieving transactions for user ID: {} between {} and {}",
         user.getId(),

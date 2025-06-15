@@ -18,6 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** Service class for managing money requests. */
 @Service
 @RequiredArgsConstructor
 public class MoneyRequestService {
@@ -27,15 +28,23 @@ public class MoneyRequestService {
   private final WalletService walletService;
   private final TransactionService transactionService;
 
+  /**
+   * Creates a new money request.
+   *
+   * @param requester the user requesting money
+   * @param requestDto the money request details
+   * @return the created money request
+   * @throws BadRequestException if validation fails
+   */
   @Transactional
-  public MoneyRequest createMoneyRequest(User requester, MoneyRequestDTO requestDTO) {
-    User requestee = userService.getUserByEmail(requestDTO.getRequesteeEmail());
+  public MoneyRequest createMoneyRequest(final User requester, final MoneyRequestDTO requestDto) {
+    final User requestee = userService.getUserByEmail(requestDto.getRequesteeEmail());
 
     // Ensure requester is not requesting money from themselves
     if (requester.getId().equals(requestee.getId())) {
       throw new BadRequestException("You cannot request money from yourself");
     }
-    Wallet wallet = walletService.getWalletByNumber(requestDTO.getWalletNumber());
+    final Wallet wallet = walletService.getWalletByNumber(requestDto.getWalletNumber());
 
     // Ensure the wallet belongs to the requester
     if (!wallet.getUser().getId().equals(requester.getId())) {
@@ -43,32 +52,53 @@ public class MoneyRequestService {
     }
 
     // Create the money request
-    MoneyRequest moneyRequest = new MoneyRequest();
+    final MoneyRequest moneyRequest = new MoneyRequest();
     moneyRequest.setRequester(requester);
     moneyRequest.setRequestee(requestee);
     moneyRequest.setRequestWallet(wallet);
-    moneyRequest.setAmount(requestDTO.getAmount());
-    moneyRequest.setDescription(requestDTO.getDescription());
+    moneyRequest.setAmount(requestDto.getAmount());
+    moneyRequest.setDescription(requestDto.getDescription());
     moneyRequest.setStatus(MoneyRequest.RequestStatus.PENDING);
     moneyRequest.setExpiresAt(LocalDateTime.now().plusDays(7));
 
     return moneyRequestRepository.save(moneyRequest);
   }
 
-  public MoneyRequest getMoneyRequestById(Long id) {
+  /**
+   * Retrieves a money request by its ID.
+   *
+   * @param id the money request ID
+   * @return the money request
+   * @throws ResourceNotFoundException if not found
+   */
+  public MoneyRequest getMoneyRequestById(final Long id) {
     return moneyRequestRepository
         .findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("MoneyRequest", "id", id));
   }
 
-  public MoneyRequest getMoneyRequestByNumber(String requestNumber) {
+  /**
+   * Retrieves a money request by its request number.
+   *
+   * @param requestNumber the request number
+   * @return the money request
+   * @throws ResourceNotFoundException if not found
+   */
+  public MoneyRequest getMoneyRequestByNumber(final String requestNumber) {
     return moneyRequestRepository
         .findByRequestNumber(requestNumber)
         .orElseThrow(
             () -> new ResourceNotFoundException("MoneyRequest", "requestNumber", requestNumber));
   }
 
-  public Page<MoneyRequest> getSentMoneyRequests(User user, Pageable pageable) {
+  /**
+   * Retrieves money requests sent by a user.
+   *
+   * @param user the user
+   * @param pageable pagination parameters
+   * @return page of sent money requests
+   */
+  public Page<MoneyRequest> getSentMoneyRequests(final User user, final Pageable pageable) {
     return moneyRequestRepository.findByRequesterOrderByCreatedAtDesc(user, pageable);
   }
 

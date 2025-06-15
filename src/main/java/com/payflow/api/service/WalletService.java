@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** Service class for managing wallets. */
 @Service
 @RequiredArgsConstructor
 public class WalletService {
@@ -21,13 +22,27 @@ public class WalletService {
   private final WalletRepository walletRepository;
   private final TransactionService transactionService;
 
+  /**
+   * Creates a default wallet for a user with USD currency.
+   *
+   * @param user the user to create wallet for
+   * @return the created wallet
+   */
   @Transactional
-  public Wallet createDefaultWallet(User user) {
+  public Wallet createDefaultWallet(final User user) {
     return createWallet(user, Wallet.Currency.USD, BigDecimal.ZERO);
   }
 
+  /**
+   * Creates a new wallet for a user based on request.
+   *
+   * @param user the user to create wallet for
+   * @param walletRequest the wallet creation request
+   * @return the created wallet
+   * @throws BadRequestException if user already has wallet in that currency
+   */
   @Transactional
-  public Wallet createWallet(User user, WalletRequest walletRequest) {
+  public Wallet createWallet(final User user, final WalletRequest walletRequest) {
     if (walletRepository.findByUserAndCurrency(user, walletRequest.getCurrency()).isPresent()) {
       throw new BadRequestException(
           "You already have a wallet in " + walletRequest.getCurrency() + " currency");
@@ -36,44 +51,79 @@ public class WalletService {
     return createWallet(user, walletRequest.getCurrency(), walletRequest.getInitialDeposit());
   }
 
+  /**
+   * Creates a wallet with specified currency and initial balance.
+   *
+   * @param user the user to create wallet for
+   * @param currency the wallet currency
+   * @param initialBalance the initial balance * @return the created wallet
+   */
   @Transactional
-  public Wallet createWallet(User user, Wallet.Currency currency, BigDecimal initialBalance) {
-    Wallet wallet = new Wallet();
+  public Wallet createWallet(
+      final User user, final Wallet.Currency currency, final BigDecimal initialBalance) {
+    final Wallet wallet = new Wallet();
     wallet.setUser(user);
     wallet.setCurrency(currency);
     wallet.setBalance(initialBalance);
 
-    wallet = walletRepository.save(wallet);
+    final Wallet savedWallet = walletRepository.save(wallet);
     if (initialBalance.compareTo(BigDecimal.ZERO) > 0) {
-      transactionService.createDepositTransaction(wallet, initialBalance);
+      transactionService.createDepositTransaction(savedWallet, initialBalance);
     }
-
-    return wallet;
+    return savedWallet;
   }
 
-  public List<Wallet> getUserWallets(User user) {
+  /**
+   * Retrieves all wallets for a user.
+   *
+   * @param user the user
+   * @return list of user's wallets
+   */
+  public List<Wallet> getUserWallets(final User user) {
     return walletRepository.findByUserOrderByCreatedAtDesc(user);
   }
 
-  public Wallet getWalletById(Long walletId) {
+  /**
+   * Retrieves a wallet by its ID.
+   *
+   * @param walletId the wallet ID
+   * @return the wallet
+   * @throws ResourceNotFoundException if wallet not found
+   */
+  public Wallet getWalletById(final Long walletId) {
     return walletRepository
         .findById(walletId)
         .orElseThrow(() -> new ResourceNotFoundException("Wallet", "id", walletId));
   }
 
-  public Wallet getWalletByNumber(String walletNumber) {
+  /**
+   * Retrieves a wallet by its wallet number.
+   *
+   * @param walletNumber the wallet number
+   * @return the wallet
+   * @throws ResourceNotFoundException if wallet not found
+   */
+  public Wallet getWalletByNumber(final String walletNumber) {
     return walletRepository
         .findByWalletNumber(walletNumber)
         .orElseThrow(() -> new ResourceNotFoundException("Wallet", "walletNumber", walletNumber));
   }
 
+  /**
+   * Tops up a wallet with specified amount.
+   *
+   * @param user the user performing the top-up
+   * @param topUpRequest the top-up request details
+   * @return the transaction record
+   * @throws BadRequestException if user doesn't own the wallet
+   */
   @Transactional
-  public Transaction topUpWallet(User user, TopUpRequest topUpRequest) {
-    Wallet wallet = getWalletByNumber(topUpRequest.getWalletNumber());
+  public Transaction topUpWallet(final User user, final TopUpRequest topUpRequest) {
+    final Wallet wallet = getWalletByNumber(topUpRequest.getWalletNumber());
     if (!wallet.getUser().getId().equals(user.getId())) {
       throw new BadRequestException("You can only top up your own wallet");
     }
-    Transaction transaction =
+    final Transaction transaction =
         transactionService.createDepositTransaction(wallet, topUpRequest.getAmount());
     wallet.setBalance(wallet.getBalance().add(topUpRequest.getAmount()));
     walletRepository.save(wallet);

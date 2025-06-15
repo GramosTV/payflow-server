@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/** Controller for QR code operations. */
 @RestController
 @RequestMapping("qr-codes")
 @Tag(name = "QR Codes", description = "QR Code management API")
@@ -33,14 +34,21 @@ public class QRCodeController {
   private final QRCodeService qrCodeService;
   private final UserService userService;
 
+  /**
+   * Creates a new QR code for a wallet.
+   *
+   * @param currentUser the authenticated user
+   * @param qrCodeRequest the QR code request details
+   * @return the created QR code
+   */
   @PostMapping
   @Operation(summary = "Create a new QR code for a wallet")
-  public ResponseEntity<?> createQRCode(
-      @AuthenticationPrincipal UserPrincipal currentUser,
-      @RequestBody QRCodeRequest qrCodeRequest) {
+  public ResponseEntity<?> createQrCode(
+      @AuthenticationPrincipal final UserPrincipal currentUser,
+      @RequestBody final QRCodeRequest qrCodeRequest) {
 
-    User user = userService.getUserById(currentUser.getId());
-    QRCode qrCode =
+    final User user = userService.getUserById(currentUser.getId());
+    final QRCode qrCode =
         qrCodeService.createWalletQRCode(
             user,
             qrCodeRequest.getWalletNumber(),
@@ -50,7 +58,7 @@ public class QRCodeController {
             qrCodeRequest.getDescription(),
             qrCodeRequest.getExpiresAt());
 
-    Map<String, Object> response = new HashMap<>();
+    final Map<String, Object> response = new HashMap<>();
     response.put("id", qrCode.getId());
     response.put("qrId", qrCode.getQrId());
     response.put("walletNumber", qrCode.getWallet().getWalletNumber());
@@ -66,17 +74,23 @@ public class QRCodeController {
     return new ResponseEntity<>(response, HttpStatus.CREATED);
   }
 
+  /**
+   * Retrieves all QR codes for the current user.
+   *
+   * @param currentUser the authenticated user
+   * @return list of QR codes
+   */
   @GetMapping
   @Operation(summary = "Get all QR codes for the current user")
-  public ResponseEntity<?> getMyQRCodes(@AuthenticationPrincipal UserPrincipal currentUser) {
-    User user = userService.getUserById(currentUser.getId());
-    List<QRCode> qrCodes = qrCodeService.getUserQRCodes(user);
+  public ResponseEntity<?> getMyQrCodes(@AuthenticationPrincipal final UserPrincipal currentUser) {
+    final User user = userService.getUserById(currentUser.getId());
+    final List<QRCode> qrCodes = qrCodeService.getUserQRCodes(user);
 
-    List<Map<String, Object>> response =
+    final List<Map<String, Object>> response =
         qrCodes.stream()
             .map(
                 qrCode -> {
-                  Map<String, Object> map = new HashMap<>();
+                  final Map<String, Object> map = new HashMap<>();
                   map.put("id", qrCode.getId());
                   map.put("qrId", qrCode.getQrId());
                   map.put("walletNumber", qrCode.getWallet().getWalletNumber());

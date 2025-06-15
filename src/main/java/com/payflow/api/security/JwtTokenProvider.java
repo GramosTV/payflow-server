@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+/** JWT token provider for authentication and authorization. */
 @Component
 @Slf4j
 public class JwtTokenProvider {
@@ -17,11 +18,17 @@ public class JwtTokenProvider {
   @Value("${jwt.expiration}")
   private int jwtExpirationInMs;
 
-  public String generateToken(Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+  /**
+   * Generates a JWT token for authenticated user.
+   *
+   * @param authentication the authentication object
+   * @return JWT token string
+   */
+  public String generateToken(final Authentication authentication) {
+    final UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-    Date now = new Date();
-    Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+    final Date now = new Date();
+    final Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
     return Jwts.builder()
         .setSubject(Long.toString(userPrincipal.getId()))
@@ -33,13 +40,25 @@ public class JwtTokenProvider {
         .compact();
   }
 
-  public Long getUserIdFromJWT(String token) {
-    Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody();
+  /**
+   * Extracts user ID from JWT token.
+   *
+   * @param token the JWT token
+   * @return user ID
+   */
+  public Long getUserIdFromJwt(final String token) {
+    final Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody();
 
     return Long.parseLong(claims.getSubject());
   }
 
-  public boolean validateToken(String authToken) {
+  /**
+   * Validates a JWT token.
+   *
+   * @param authToken the token to validate
+   * @return true if valid, false otherwise
+   */
+  public boolean validateToken(final String authToken) {
     try {
       Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
       return true;

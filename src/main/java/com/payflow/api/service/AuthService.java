@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** Service class for authentication operations. */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -24,28 +25,40 @@ public class AuthService {
   private final JwtTokenProvider tokenProvider;
   private final WalletService walletService;
 
+  /**
+   * Registers a new user and creates a default wallet.
+   *
+   * @param signUpRequest the registration request
+   * @return JWT authentication response
+   */
   @Transactional
-  public JwtAuthResponse register(SignUpRequest signUpRequest) {
-    User user = userService.createUser(signUpRequest);
+  public JwtAuthResponse register(final SignUpRequest signUpRequest) {
+    final User user = userService.createUser(signUpRequest);
     walletService.createDefaultWallet(user);
 
     return authenticateUser(signUpRequest.getEmail(), signUpRequest.getPassword());
   }
 
-  public JwtAuthResponse login(LoginRequest loginRequest) {
+  /**
+   * Authenticates a user login.
+   *
+   * @param loginRequest the login request
+   * @return JWT authentication response
+   */
+  public JwtAuthResponse login(final LoginRequest loginRequest) {
     return authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
   }
 
-  private JwtAuthResponse authenticateUser(String email, String password) {
+  private JwtAuthResponse authenticateUser(final String email, final String password) {
     try {
-      Authentication authentication =
+      final Authentication authentication =
           authenticationManager.authenticate(
               new UsernamePasswordAuthenticationToken(email, password));
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
 
-      String jwt = tokenProvider.generateToken(authentication);
-      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      final String jwt = tokenProvider.generateToken(authentication);
+      final UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
       return new JwtAuthResponse(
           jwt,

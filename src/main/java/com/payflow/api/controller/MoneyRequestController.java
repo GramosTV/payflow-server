@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/** Controller for handling money request operations. */
 @RestController
 @RequestMapping("money-requests")
 @RequiredArgsConstructor
@@ -30,67 +31,104 @@ public class MoneyRequestController {
   private final MoneyRequestService moneyRequestService;
   private final UserService userService;
 
+  /**
+   * Creates a new money request.
+   *
+   * @param currentUser the authenticated user making the request
+   * @param requestDto the money request details
+   * @return the created money request
+   */
   @PostMapping
   @Operation(summary = "Request money from another user")
   public ResponseEntity<MoneyRequestResponse> requestMoney(
-      @AuthenticationPrincipal UserPrincipal currentUser,
-      @Valid @RequestBody MoneyRequestDTO requestDTO) {
+      @AuthenticationPrincipal final UserPrincipal currentUser,
+      @Valid @RequestBody final MoneyRequestDTO requestDto) {
 
-    User requester = userService.getUserById(currentUser.getId());
-    MoneyRequest moneyRequest = moneyRequestService.createMoneyRequest(requester, requestDTO);
-
+    final User requester = userService.getUserById(currentUser.getId());
+    final MoneyRequest moneyRequest = moneyRequestService.createMoneyRequest(requester, requestDto);
     return new ResponseEntity<>(MoneyRequestResponse.fromEntity(moneyRequest), HttpStatus.CREATED);
   }
 
+  /**
+   * Retrieves money requests sent by the current user.
+   *
+   * @param currentUser the authenticated user
+   * @param pageable pagination parameters
+   * @return page of sent money requests
+   */
   @GetMapping("/sent")
   @Operation(summary = "Get money requests sent by current user")
   public ResponseEntity<Page<MoneyRequestResponse>> getSentRequests(
-      @AuthenticationPrincipal UserPrincipal currentUser, Pageable pageable) {
+      @AuthenticationPrincipal final UserPrincipal currentUser, final Pageable pageable) {
 
-    User user = userService.getUserById(currentUser.getId());
-    Page<MoneyRequest> requests = moneyRequestService.getSentMoneyRequests(user, pageable);
+    final User user = userService.getUserById(currentUser.getId());
+    final Page<MoneyRequest> requests = moneyRequestService.getSentMoneyRequests(user, pageable);
 
-    Page<MoneyRequestResponse> responses = requests.map(MoneyRequestResponse::fromEntity);
+    final Page<MoneyRequestResponse> responses = requests.map(MoneyRequestResponse::fromEntity);
 
     return ResponseEntity.ok(responses);
   }
 
+  /**
+   * Retrieves money requests received by the current user.
+   *
+   * @param currentUser the authenticated user
+   * @param pageable pagination parameters
+   * @return page of received money requests
+   */
   @GetMapping("/received")
   @Operation(summary = "Get money requests received by current user")
   public ResponseEntity<Page<MoneyRequestResponse>> getReceivedRequests(
-      @AuthenticationPrincipal UserPrincipal currentUser, Pageable pageable) {
+      @AuthenticationPrincipal final UserPrincipal currentUser, final Pageable pageable) {
 
-    User user = userService.getUserById(currentUser.getId());
-    Page<MoneyRequest> requests = moneyRequestService.getReceivedMoneyRequests(user, pageable);
+    final User user = userService.getUserById(currentUser.getId());
+    final Page<MoneyRequest> requests =
+        moneyRequestService.getReceivedMoneyRequests(user, pageable);
 
-    Page<MoneyRequestResponse> responses = requests.map(MoneyRequestResponse::fromEntity);
+    final Page<MoneyRequestResponse> responses = requests.map(MoneyRequestResponse::fromEntity);
 
     return ResponseEntity.ok(responses);
   }
 
+  /**
+   * Processes a money request (approve or decline).
+   *
+   * @param currentUser the authenticated user
+   * @param actionDto the action to perform
+   * @return transaction response if approved, empty response if declined
+   */
   @PostMapping("/process")
   @Operation(summary = "Approve or decline a money request")
   public ResponseEntity<?> processMoneyRequest(
-      @AuthenticationPrincipal UserPrincipal currentUser,
-      @Valid @RequestBody MoneyRequestActionDTO actionDTO) {
+      @AuthenticationPrincipal final UserPrincipal currentUser,
+      @Valid @RequestBody final MoneyRequestActionDTO actionDto) {
 
-    User user = userService.getUserById(currentUser.getId());
+    final User user = userService.getUserById(currentUser.getId());
 
-    if ("APPROVE".equalsIgnoreCase(actionDTO.getAction())) {
-      Transaction transaction = moneyRequestService.processMoneyRequestAction(user, actionDTO);
+    if ("APPROVE".equalsIgnoreCase(actionDto.getAction())) {
+      final Transaction transaction =
+          moneyRequestService.processMoneyRequestAction(user, actionDto);
       return ResponseEntity.ok(TransactionResponse.fromEntity(transaction));
     } else {
-      moneyRequestService.processMoneyRequestAction(user, actionDTO);
+      moneyRequestService.processMoneyRequestAction(user, actionDto);
       return ResponseEntity.ok().build();
     }
   }
 
+  /**
+   * Cancels a money request.
+   *
+   * @param currentUser the authenticated user
+   * @param requestNumber the request number to cancel
+   * @return empty response
+   */
   @PostMapping("/{requestNumber}/cancel")
   @Operation(summary = "Cancel a money request")
   public ResponseEntity<?> cancelMoneyRequest(
-      @AuthenticationPrincipal UserPrincipal currentUser, @PathVariable String requestNumber) {
+      @AuthenticationPrincipal final UserPrincipal currentUser,
+      @PathVariable final String requestNumber) {
 
-    User user = userService.getUserById(currentUser.getId());
+    final User user = userService.getUserById(currentUser.getId());
     moneyRequestService.cancelMoneyRequest(user, requestNumber);
 
     return ResponseEntity.ok().build();

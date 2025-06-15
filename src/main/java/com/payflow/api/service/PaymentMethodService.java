@@ -10,24 +10,46 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** Service class for managing payment methods. */
 @Service
 @RequiredArgsConstructor
 public class PaymentMethodService {
 
   private final PaymentMethodRepository paymentMethodRepository;
 
-  public List<PaymentMethod> getUserPaymentMethods(User user) {
+  /**
+   * Retrieves all payment methods for a user.
+   *
+   * @param user the user whose payment methods to retrieve
+   * @return list of payment methods ordered by creation date
+   */
+  public List<PaymentMethod> getUserPaymentMethods(final User user) {
     return paymentMethodRepository.findByUserOrderByCreatedAtDesc(user);
   }
 
-  public PaymentMethod getPaymentMethodById(Long id) {
+  /**
+   * Retrieves a payment method by its ID.
+   *
+   * @param id the payment method ID
+   * @return the payment method
+   * @throws ResourceNotFoundException if payment method not found
+   */
+  public PaymentMethod getPaymentMethodById(final Long id) {
     return paymentMethodRepository
         .findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("PaymentMethod", "id", id));
   }
 
+  /**
+   * Creates a new payment method for a user.
+   *
+   * @param user the user who owns the payment method
+   * @param paymentMethod the payment method to create
+   * @return the created payment method
+   * @throws BadRequestException if required fields are missing
+   */
   @Transactional
-  public PaymentMethod createPaymentMethod(User user, PaymentMethod paymentMethod) {
+  public PaymentMethod createPaymentMethod(final User user, final PaymentMethod paymentMethod) {
     if (paymentMethod.getType() == PaymentMethod.PaymentMethodType.CARD) {
       if (paymentMethod.getCardNumber() == null
           || paymentMethod.getExpiryDate() == null
@@ -46,9 +68,17 @@ public class PaymentMethodService {
     return paymentMethodRepository.save(paymentMethod);
   }
 
+  /**
+   * Deletes a payment method for a user.
+   *
+   * @param user the user who owns the payment method
+   * @param paymentMethodId the ID of the payment method to delete
+   * @throws BadRequestException if user doesn't own the payment method
+   * @throws ResourceNotFoundException if payment method not found
+   */
   @Transactional
-  public void deletePaymentMethod(User user, Long paymentMethodId) {
-    PaymentMethod paymentMethod = getPaymentMethodById(paymentMethodId);
+  public void deletePaymentMethod(final User user, final Long paymentMethodId) {
+    final PaymentMethod paymentMethod = getPaymentMethodById(paymentMethodId);
 
     // Ensure the payment method belongs to the user
     if (!paymentMethod.getUser().getId().equals(user.getId())) {
