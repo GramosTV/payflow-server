@@ -8,8 +8,8 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 public class PayflowApiApplicationTests {
 
-    @Test
-    public void contextLoads() {
-        // This test verifies that the Spring application context loads successfully
-    }
+  @Test
+  public void contextLoads() {
+    // This test verifies that the Spring application context loads successfully
+  }
 }

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Suppress JavadocPackage for all packages -->
+    <suppress checks="JavadocPackage" files=".*"/>
+    
+    <!-- Suppress MissingJavadocMethod for test files -->
+    <suppress checks="MissingJavadocMethod" files=".*Test\.java$"/>
+    
+    <!-- Suppress MissingJavadocType for DTOs and entities -->
+    <suppress checks="MissingJavadocType" files=".*dto.*\.java$"/>
+    <suppress checks="MissingJavadocType" files=".*entity.*\.java$"/>
+    <suppress checks="MissingJavadocType" files=".*model.*\.java$"/>
+    
+    <!-- Suppress HiddenField for Lombok constructors -->
+    <suppress checks="HiddenField" files=".*\.java$" lines="1-999"/>
+    
+    <!-- Suppress DesignForExtension for Spring components -->
+    <suppress checks="DesignForExtension" files=".*Controller\.java$"/>
+    <suppress checks="DesignForExtension" files=".*Service\.java$"/>
+    <suppress checks="DesignForExtension" files=".*Repository\.java$"/>
+    <suppress checks="DesignForExtension" files=".*Config\.java$"/>
+    
+    <!-- Suppress FinalClass for Spring components -->
+    <suppress checks="FinalClass" files=".*Controller\.java$"/>
+    <suppress checks="FinalClass" files=".*Service\.java$"/>
+    <suppress checks="FinalClass" files=".*Config\.java$"/>
+</suppressions>

@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class PayflowApiApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(PayflowApiApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(PayflowApiApplication.class, args);
+  }
 }

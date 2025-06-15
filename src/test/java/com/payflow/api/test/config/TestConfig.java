@@ -10,8 +10,8 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 public class TestConfig {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 }

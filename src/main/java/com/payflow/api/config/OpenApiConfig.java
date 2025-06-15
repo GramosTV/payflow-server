@@ -13,28 +13,31 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
 
-    @Bean
-    public OpenAPI customOpenAPI() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("PayFlow Lite API")
-                        .description("RESTful API for the PayFlow Lite digital wallet system")
-                        .version("1.0.0")
-                        .contact(new Contact()
-                                .name("PayFlow Team")
-                                .email("support@payflow.example.com")
-                                .url("https://payflow.example.com"))
-                        .license(new License()
-                                .name("MIT License")
-                                .url("https://opensource.org/licenses/MIT")))
-                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
-                .components(new Components()
-                        .addSecuritySchemes("bearerAuth",
-                                new SecurityScheme()
-                                        .name("bearerAuth")
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")
-                                        .description("Enter JWT Bearer token")));
-    }
+  @Bean
+  public OpenAPI customOpenAPI() {
+    return new OpenAPI()
+        .info(
+            new Info()
+                .title("PayFlow Lite API")
+                .description("RESTful API for the PayFlow Lite digital wallet system")
+                .version("1.0.0")
+                .contact(
+                    new Contact()
+                        .name("PayFlow Team")
+                        .email("support@payflow.example.com")
+                        .url("https://payflow.example.com"))
+                .license(
+                    new License().name("MIT License").url("https://opensource.org/licenses/MIT")))
+        .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+        .components(
+            new Components()
+                .addSecuritySchemes(
+                    "bearerAuth",
+                    new SecurityScheme()
+                        .name("bearerAuth")
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .bearerFormat("JWT")
+                        .description("Enter JWT Bearer token")));
+  }
 }

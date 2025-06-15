@@ -4,24 +4,23 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Projection interface for optimized Transaction queries
- * This reduces the amount of data fetched when full Transaction entities are
- * not needed
+ * Projection interface for optimized Transaction queries This reduces the amount of data fetched
+ * when full Transaction entities are not needed
  */
 public interface TransactionSummary {
-    Long getId();
+  Long getId();
 
-    String getTransactionNumber();
+  String getTransactionNumber();
 
-    BigDecimal getAmount();
+  BigDecimal getAmount();
 
-    String getType();
+  String getType();
 
-    String getStatus();
+  String getStatus();
 
-    LocalDateTime getCreatedAt();
+  LocalDateTime getCreatedAt();
 
-    String getSenderName();
+  String getSenderName();
 
-    String getReceiverName();
+  String getReceiverName();
 }

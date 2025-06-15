@@ -14,36 +14,38 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
 
-    @Transactional
-    public User createUser(SignUpRequest signUpRequest) {
-        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            throw new ConflictException("Email is already taken");
-        }
-        User user = new User();
-        user.setFullName(signUpRequest.getFullName());
-        user.setEmail(signUpRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
-        user.setPhoneNumber(signUpRequest.getPhoneNumber());
-        user.setEnabled(true);
-        user.setRole(User.UserRole.USER);
-
-        return userRepository.save(user);
+  @Transactional
+  public User createUser(SignUpRequest signUpRequest) {
+    if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+      throw new ConflictException("Email is already taken");
     }
+    User user = new User();
+    user.setFullName(signUpRequest.getFullName());
+    user.setEmail(signUpRequest.getEmail());
+    user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+    user.setPhoneNumber(signUpRequest.getPhoneNumber());
+    user.setEnabled(true);
+    user.setRole(User.UserRole.USER);
 
-    public User getUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-    }
+    return userRepository.save(user);
+  }
 
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
-    }
+  public User getUserById(Long id) {
+    return userRepository
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+  }
 
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
+  public User getUserByEmail(String email) {
+    return userRepository
+        .findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+  }
+
+  public boolean existsByEmail(String email) {
+    return userRepository.existsByEmail(email);
+  }
 }

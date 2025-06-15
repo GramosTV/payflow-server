@@ -19,42 +19,43 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserService userService;
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider tokenProvider;
-    private final WalletService walletService;
+  private final UserService userService;
+  private final AuthenticationManager authenticationManager;
+  private final JwtTokenProvider tokenProvider;
+  private final WalletService walletService;
 
-    @Transactional
-    public JwtAuthResponse register(SignUpRequest signUpRequest) {
-        User user = userService.createUser(signUpRequest);
-        walletService.createDefaultWallet(user);
+  @Transactional
+  public JwtAuthResponse register(SignUpRequest signUpRequest) {
+    User user = userService.createUser(signUpRequest);
+    walletService.createDefaultWallet(user);
 
-        return authenticateUser(signUpRequest.getEmail(), signUpRequest.getPassword());
+    return authenticateUser(signUpRequest.getEmail(), signUpRequest.getPassword());
+  }
+
+  public JwtAuthResponse login(LoginRequest loginRequest) {
+    return authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
+  }
+
+  private JwtAuthResponse authenticateUser(String email, String password) {
+    try {
+      Authentication authentication =
+          authenticationManager.authenticate(
+              new UsernamePasswordAuthenticationToken(email, password));
+
+      SecurityContextHolder.getContext().setAuthentication(authentication);
+
+      String jwt = tokenProvider.generateToken(authentication);
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+      return new JwtAuthResponse(
+          jwt,
+          "Bearer", // Added tokenType parameter
+          userPrincipal.getId(),
+          userPrincipal.getEmail(),
+          userPrincipal.getFullName(),
+          userPrincipal.getAuthorities().iterator().next().getAuthority().replace("ROLE_", ""));
+    } catch (Exception e) {
+      throw new BadRequestException("Invalid email or password");
     }
-
-    public JwtAuthResponse login(LoginRequest loginRequest) {
-        return authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
-    }
-
-    private JwtAuthResponse authenticateUser(String email, String password) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password));
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            String jwt = tokenProvider.generateToken(authentication);
-            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-
-            return new JwtAuthResponse(
-                    jwt,
-                    "Bearer", // Added tokenType parameter
-                    userPrincipal.getId(),
-                    userPrincipal.getEmail(),
-                    userPrincipal.getFullName(),
-                    userPrincipal.getAuthorities().iterator().next().getAuthority().replace("ROLE_", ""));
-        } catch (Exception e) {
-            throw new BadRequestException("Invalid email or password");
-        }
-    }
+  }
 }
